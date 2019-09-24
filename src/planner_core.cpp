@@ -48,7 +48,7 @@
 #include <global_planner_plus/quadratic_calculator.h>
 
 //register this planner as a BaseGlobalPlannerPlus plugin
-PLUGINLIB_EXPORT_CLASS(global_planner_plus::GlobalPlannerPlus, nav_core::BaseGlobalPlannerPlus)
+PLUGINLIB_EXPORT_CLASS(global_planner_plus::GlobalPlannerPlus, nav_core::BaseGlobalPlanner)
 
 namespace global_planner_plus {
 

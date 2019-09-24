@@ -16,7 +16,7 @@ find_package(catkin REQUIRED
 )
 
 generate_dynamic_reconfigure_options(
-  cfg/global_planner_plus.cfg
+  cfg/GlobalPlannerPlus.cfg
 )
 
 catkin_package(

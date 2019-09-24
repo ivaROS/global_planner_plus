@@ -45,14 +45,14 @@
 #include <nav_msgs/Path.h>
 #include <tf/transform_datatypes.h>
 #include <vector>
-#include <nav_core/base_global_planner_plus.h>
+#include <nav_core/base_global_planner.h>
 #include <nav_msgs/GetPlan.h>
 #include <dynamic_reconfigure/server.h>
 #include <global_planner_plus/potential_calculator.h>
 #include <global_planner_plus/expander.h>
 #include <global_planner_plus/traceback.h>
 #include <global_planner_plus/orientation_filter.h>
-#include <global_planner_plus/global_planner_plusConfig.h>
+#include <global_planner_plus/GlobalPlannerPlusConfig.h>
 
 namespace global_planner_plus {
 
@@ -64,12 +64,12 @@ class GridPath;
  * @brief Provides a ROS wrapper for the global_planner_plus planner which runs a fast, interpolated navigation function on a costmap.
  */
 
-class global_planner_plus : public nav_core::Baseglobal_planner_plus {
+class GlobalPlannerPlus : public nav_core::BaseGlobalPlanner {
     public:
         /**
          * @brief  Default constructor for the PlannerCore object
          */
-        global_planner_plus();
+        GlobalPlannerPlus();
 
         /**
          * @brief  Constructor for the PlannerCore object
@@ -77,12 +77,12 @@ class global_planner_plus : public nav_core::Baseglobal_planner_plus {
          * @param  costmap A pointer to the costmap to use
          * @param  frame_id Frame of the costmap
          */
-        global_planner_plus(std::string name, costmap_2d::Costmap2D* costmap, std::string frame_id);
+        GlobalPlannerPlus(std::string name, costmap_2d::Costmap2D* costmap, std::string frame_id);
 
         /**
          * @brief  Default deconstructor for the PlannerCore object
          */
-        ~global_planner_plus();
+        ~GlobalPlannerPlus();
 
         /**
          * @brief  Initialization function for the PlannerCore object
@@ -202,8 +202,8 @@ class global_planner_plus : public nav_core::Baseglobal_planner_plus {
         bool old_navfn_behavior_;
         float convert_offset_;
 
-        dynamic_reconfigure::Server<global_planner_plus::global_planner_plusConfig> *dsrv_;
-        void reconfigureCB(global_planner_plus::global_planner_plusConfig &config, uint32_t level);
+        dynamic_reconfigure::Server<global_planner_plus::GlobalPlannerPlusConfig> *dsrv_;
+        void reconfigureCB(global_planner_plus::GlobalPlannerPlusConfig &config, uint32_t level);
 
 };
 
