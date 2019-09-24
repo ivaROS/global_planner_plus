@@ -35,7 +35,7 @@
  * Author: Bhaskara Marthi
  *         David V. Lu!!
  *********************************************************************/
-#include <global_planner/planner_core.h>
+#include <global_planner_plus/planner_core.h>
 #include <navfn/MakeNavPlan.h>
 #include <boost/shared_ptr.hpp>
 #include <costmap_2d/costmap_2d_ros.h>
@@ -49,9 +49,9 @@ using std::string;
 using cm::Costmap2D;
 using cm::Costmap2DROS;
 
-namespace global_planner {
+namespace global_planner_plus {
 
-class PlannerWithCostmap : public GlobalPlanner {
+class PlannerWithCostmap : public global_planner_plus {
     public:
         PlannerWithCostmap(string name, Costmap2DROS* cmap);
         bool makePlanService(navfn::MakeNavPlan::Request& req, navfn::MakeNavPlan::Response& resp);
@@ -95,7 +95,7 @@ void PlannerWithCostmap::poseCallback(const rm::PoseStamped::ConstPtr& goal) {
 }
 
 PlannerWithCostmap::PlannerWithCostmap(string name, Costmap2DROS* cmap) :
-        GlobalPlanner(name, cmap->getCostmap(), cmap->getGlobalFrameID()) {
+        global_planner_plus(name, cmap->getCostmap(), cmap->getGlobalFrameID()) {
     ros::NodeHandle private_nh("~");
     cmap_ = cmap;
     make_plan_service_ = private_nh.advertiseService("make_plan", &PlannerWithCostmap::makePlanService, this);
@@ -105,13 +105,13 @@ PlannerWithCostmap::PlannerWithCostmap(string name, Costmap2DROS* cmap) :
 } // namespace
 
 int main(int argc, char** argv) {
-    ros::init(argc, argv, "global_planner");
+    ros::init(argc, argv, "global_planner_plus");
 
     tf::TransformListener tf(ros::Duration(10));
 
     costmap_2d::Costmap2DROS lcr("costmap", tf);
 
-    global_planner::PlannerWithCostmap pppp("planner", &lcr);
+    global_planner_plus::PlannerWithCostmap pppp("planner", &lcr);
 
     ros::spin();
     return 0;

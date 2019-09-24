@@ -38,10 +38,10 @@
 #ifndef _GRADIENT_PATH_H
 #define _GRADIENT_PATH_H
 
-#include<global_planner/traceback.h>
+#include<global_planner_plus/traceback.h>
 #include <math.h>
 
-namespace global_planner {
+namespace global_planner_plus {
 
 class GradientPath : public Traceback {
     public:
@@ -73,5 +73,5 @@ class GradientPath : public Traceback {
         float pathStep_; /**< step size for following gradient */
 };
 
-} //end namespace global_planner
+} //end namespace global_planner_plus
 #endif

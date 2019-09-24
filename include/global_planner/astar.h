@@ -38,12 +38,12 @@
 #ifndef _ASTAR_H
 #define _ASTAR_H
 
-#include <global_planner/planner_core.h>
-#include <global_planner/expander.h>
+#include <global_planner_plus/planner_core.h>
+#include <global_planner_plus/expander.h>
 #include <vector>
 #include <algorithm>
 
-namespace global_planner {
+namespace global_planner_plus {
 class Index {
     public:
         Index(int a, float b) {
@@ -70,6 +70,6 @@ class AStarExpansion : public Expander {
         std::vector<Index> queue_;
 };
 
-} //end namespace global_planner
+} //end namespace global_planner_plus
 #endif
 

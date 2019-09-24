@@ -35,9 +35,9 @@
  * Author: Eitan Marder-Eppstein
  *         David V. Lu!!
  *********************************************************************/
-#include<global_planner/dijkstra.h>
+#include<global_planner_plus/dijkstra.h>
 #include <algorithm>
-namespace global_planner {
+namespace global_planner_plus {
 
 DijkstraExpansion::DijkstraExpansion(PotentialCalculator* p_calc, int nx, int ny) :
         Expander(p_calc, nx, ny), pending_(NULL), precise_(false) {
@@ -231,4 +231,4 @@ inline void DijkstraExpansion::updateCell(unsigned char* costs, float* potential
     }
 }
 
-} //end namespace global_planner
+} //end namespace global_planner_plus

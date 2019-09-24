@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(global_planner)
+project(global_planner_plus)
 
 find_package(catkin REQUIRED
   COMPONENTS
@@ -16,7 +16,7 @@ find_package(catkin REQUIRED
 )
 
 generate_dynamic_reconfigure_options(
-  cfg/GlobalPlanner.cfg
+  cfg/global_planner_plus.cfg
 )
 
 catkin_package(

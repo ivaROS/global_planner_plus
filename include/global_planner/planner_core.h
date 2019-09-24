@@ -45,31 +45,31 @@
 #include <nav_msgs/Path.h>
 #include <tf/transform_datatypes.h>
 #include <vector>
-#include <nav_core/base_global_planner.h>
+#include <nav_core/base_global_planner_plus.h>
 #include <nav_msgs/GetPlan.h>
 #include <dynamic_reconfigure/server.h>
-#include <global_planner/potential_calculator.h>
-#include <global_planner/expander.h>
-#include <global_planner/traceback.h>
-#include <global_planner/orientation_filter.h>
-#include <global_planner/GlobalPlannerConfig.h>
+#include <global_planner_plus/potential_calculator.h>
+#include <global_planner_plus/expander.h>
+#include <global_planner_plus/traceback.h>
+#include <global_planner_plus/orientation_filter.h>
+#include <global_planner_plus/global_planner_plusConfig.h>
 
-namespace global_planner {
+namespace global_planner_plus {
 
 class Expander;
 class GridPath;
 
 /**
  * @class PlannerCore
- * @brief Provides a ROS wrapper for the global_planner planner which runs a fast, interpolated navigation function on a costmap.
+ * @brief Provides a ROS wrapper for the global_planner_plus planner which runs a fast, interpolated navigation function on a costmap.
  */
 
-class GlobalPlanner : public nav_core::BaseGlobalPlanner {
+class global_planner_plus : public nav_core::Baseglobal_planner_plus {
     public:
         /**
          * @brief  Default constructor for the PlannerCore object
          */
-        GlobalPlanner();
+        global_planner_plus();
 
         /**
          * @brief  Constructor for the PlannerCore object
@@ -77,12 +77,12 @@ class GlobalPlanner : public nav_core::BaseGlobalPlanner {
          * @param  costmap A pointer to the costmap to use
          * @param  frame_id Frame of the costmap
          */
-        GlobalPlanner(std::string name, costmap_2d::Costmap2D* costmap, std::string frame_id);
+        global_planner_plus(std::string name, costmap_2d::Costmap2D* costmap, std::string frame_id);
 
         /**
          * @brief  Default deconstructor for the PlannerCore object
          */
-        ~GlobalPlanner();
+        ~global_planner_plus();
 
         /**
          * @brief  Initialization function for the PlannerCore object
@@ -202,11 +202,11 @@ class GlobalPlanner : public nav_core::BaseGlobalPlanner {
         bool old_navfn_behavior_;
         float convert_offset_;
 
-        dynamic_reconfigure::Server<global_planner::GlobalPlannerConfig> *dsrv_;
-        void reconfigureCB(global_planner::GlobalPlannerConfig &config, uint32_t level);
+        dynamic_reconfigure::Server<global_planner_plus::global_planner_plusConfig> *dsrv_;
+        void reconfigureCB(global_planner_plus::global_planner_plusConfig &config, uint32_t level);
 
 };
 
-} //end namespace global_planner
+} //end namespace global_planner_plus
 
 #endif

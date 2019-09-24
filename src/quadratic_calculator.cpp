@@ -27,9 +27,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <global_planner/quadratic_calculator.h>
+#include <global_planner_plus/quadratic_calculator.h>
 
-namespace global_planner {
+namespace global_planner_plus {
 float QuadraticCalculator::calculatePotential(float* potential, unsigned char cost, int n, float prev_potential) {
     // get neighbors
     float u, d, l, r;

@@ -38,9 +38,9 @@
 #ifndef _TRACEBACK_H
 #define _TRACEBACK_H
 #include<vector>
-#include<global_planner/potential_calculator.h>
+#include<global_planner_plus/potential_calculator.h>
 
-namespace global_planner {
+namespace global_planner_plus {
 
 class Traceback {
     public:
@@ -63,5 +63,5 @@ class Traceback {
         PotentialCalculator* p_calc_;
 };
 
-} //end namespace global_planner
+} //end namespace global_planner_plus
 #endif

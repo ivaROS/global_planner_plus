@@ -34,11 +34,11 @@
  *
  * Author: David V. Lu!!
  *********************************************************************/
-#include <global_planner/orientation_filter.h>
+#include <global_planner_plus/orientation_filter.h>
 #include <tf/tf.h>
 #include <angles/angles.h>
 
-namespace global_planner {
+namespace global_planner_plus {
 
 void set_angle(geometry_msgs::PoseStamped* pose, double angle)
 {

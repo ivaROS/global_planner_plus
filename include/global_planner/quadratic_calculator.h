@@ -38,9 +38,9 @@
 #ifndef _QUADRATIC_CALCULATOR_H
 #define _QUADRATIC_CALCULATOR_H
 #include<vector>
-#include<global_planner/potential_calculator.h>
+#include<global_planner_plus/potential_calculator.h>
 
-namespace global_planner {
+namespace global_planner_plus {
 
 class QuadraticCalculator : public PotentialCalculator {
     public:
@@ -50,5 +50,5 @@ class QuadraticCalculator : public PotentialCalculator {
 };
 
 
-} //end namespace global_planner
+} //end namespace global_planner_plus
 #endif

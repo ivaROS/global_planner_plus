@@ -37,7 +37,7 @@
  *********************************************************************/
 #ifndef _POTENTIAL_CALCULATOR_H
 #define _POTENTIAL_CALCULATOR_H
-namespace global_planner {
+namespace global_planner_plus {
 
 class PotentialCalculator {
     public:
@@ -75,5 +75,5 @@ class PotentialCalculator {
         int nx_, ny_, ns_; /**< size of grid, in pixels */
 };
 
-} //end namespace global_planner
+} //end namespace global_planner_plus
 #endif

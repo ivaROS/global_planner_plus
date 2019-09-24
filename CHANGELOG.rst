@@ -1,5 +1,5 @@
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package global_planner
+Changelog for package global_planner_plus
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 1.14.4 (2018-06-19)
@@ -79,7 +79,7 @@ Changelog for package global_planner
 1.11.10 (2014-06-25)
 --------------------
 * Remove unnecessary colons
-* global_planner now pushes the goal onto the end of the global path
+* global_planner_plus now pushes the goal onto the end of the global path
 * move_base planService now searches out from desired goal
 * Contributors: David Lu!!, Kaijen Hsiao
 
@@ -99,7 +99,7 @@ Changelog for package global_planner
 * Global Planner Cleanup
 * Create the vector reversed instead of reverse it after
 * Reversed the plan vector
-* global_planner: Fix bgp_plugin.xml file and install it
+* global_planner_plus: Fix bgp_plugin.xml file and install it
 * Improved Global Planner (from Groovy branch)
 
 1.11.4 (2013-09-27)

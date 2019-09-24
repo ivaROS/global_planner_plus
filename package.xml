@@ -1,5 +1,5 @@
 <package>
-  <name>global_planner</name>
+  <name>global_planner_plus</name>
   <version>1.14.4</version>
   <description>
      A path planner library and node.
@@ -10,7 +10,7 @@
   <license>BSD</license>
 
   <author>David Lu!!</author>
-  <url>http://wiki.ros.org/global_planner</url>
+  <url>http://wiki.ros.org/global_planner_plus</url>
 
   <buildtool_depend>catkin</buildtool_depend>
 

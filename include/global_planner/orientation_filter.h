@@ -34,11 +34,11 @@
  *
  * Author: David V. Lu!!
  *********************************************************************/
-#ifndef GLOBAL_PLANNER_ORIENTATION_FILTER_H
-#define GLOBAL_PLANNER_ORIENTATION_FILTER_H
+#ifndef global_planner_plus_ORIENTATION_FILTER_H
+#define global_planner_plus_ORIENTATION_FILTER_H
 #include <nav_msgs/Path.h>
 
-namespace global_planner {
+namespace global_planner_plus {
 
 enum OrientationMode { NONE, FORWARD, INTERPOLATE, FORWARDTHENINTERPOLATE };
 
@@ -60,5 +60,5 @@ class OrientationFilter {
         OrientationMode omode_;        
 };
 
-} //end namespace global_planner
+} //end namespace global_planner_plus
 #endif

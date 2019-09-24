@@ -35,24 +35,24 @@
  * Author: Eitan Marder-Eppstein
  *         David V. Lu!!
  *********************************************************************/
-#include <global_planner/planner_core.h>
+#include <global_planner_plus/planner_core.h>
 #include <pluginlib/class_list_macros.h>
 #include <tf/transform_listener.h>
 #include <costmap_2d/cost_values.h>
 #include <costmap_2d/costmap_2d.h>
 
-#include <global_planner/dijkstra.h>
-#include <global_planner/astar.h>
-#include <global_planner/grid_path.h>
-#include <global_planner/gradient_path.h>
-#include <global_planner/quadratic_calculator.h>
+#include <global_planner_plus/dijkstra.h>
+#include <global_planner_plus/astar.h>
+#include <global_planner_plus/grid_path.h>
+#include <global_planner_plus/gradient_path.h>
+#include <global_planner_plus/quadratic_calculator.h>
 
-//register this planner as a BaseGlobalPlanner plugin
-PLUGINLIB_EXPORT_CLASS(global_planner::GlobalPlanner, nav_core::BaseGlobalPlanner)
+//register this planner as a BaseGlobalPlannerPlus plugin
+PLUGINLIB_EXPORT_CLASS(global_planner_plus::GlobalPlannerPlus, nav_core::BaseGlobalPlannerPlus)
 
-namespace global_planner {
+namespace global_planner_plus {
 
-void GlobalPlanner::outlineMap(unsigned char* costarr, int nx, int ny, unsigned char value) {
+void GlobalPlannerPlus::outlineMap(unsigned char* costarr, int nx, int ny, unsigned char value) {
     unsigned char* pc = costarr;
     for (int i = 0; i < nx; i++)
         *pc++ = value;
@@ -67,17 +67,17 @@ void GlobalPlanner::outlineMap(unsigned char* costarr, int nx, int ny, unsigned 
         *pc = value;
 }
 
-GlobalPlanner::GlobalPlanner() :
+GlobalPlannerPlus::GlobalPlannerPlus() :
         costmap_(NULL), initialized_(false), allow_unknown_(true) {
 }
 
-GlobalPlanner::GlobalPlanner(std::string name, costmap_2d::Costmap2D* costmap, std::string frame_id) :
+GlobalPlannerPlus::GlobalPlannerPlus(std::string name, costmap_2d::Costmap2D* costmap, std::string frame_id) :
         costmap_(NULL), initialized_(false), allow_unknown_(true) {
     //initialize the planner
     initialize(name, costmap, frame_id);
 }
 
-GlobalPlanner::~GlobalPlanner() {
+GlobalPlannerPlus::~GlobalPlannerPlus() {
     if (p_calc_)
         delete p_calc_;
     if (planner_)
@@ -88,11 +88,11 @@ GlobalPlanner::~GlobalPlanner() {
         delete dsrv_;
 }
 
-void GlobalPlanner::initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros) {
+void GlobalPlannerPlus::initialize(std::string name, costmap_2d::Costmap2DROS* costmap_ros) {
     initialize(name, costmap_ros->getCostmap(), costmap_ros->getGlobalFrameID());
 }
 
-void GlobalPlanner::initialize(std::string name, costmap_2d::Costmap2D* costmap, std::string frame_id) {
+void GlobalPlannerPlus::initialize(std::string name, costmap_2d::Costmap2D* costmap, std::string frame_id) {
     if (!initialized_) {
         ros::NodeHandle private_nh("~/" + name);
         costmap_ = costmap;
@@ -151,11 +151,11 @@ void GlobalPlanner::initialize(std::string name, costmap_2d::Costmap2D* costmap,
         ros::NodeHandle prefix_nh;
         tf_prefix_ = tf::getPrefixParam(prefix_nh);
 
-        make_plan_srv_ = private_nh.advertiseService("make_plan", &GlobalPlanner::makePlanService, this);
+        make_plan_srv_ = private_nh.advertiseService("make_plan", &GlobalPlannerPlus::makePlanService, this);
 
-        dsrv_ = new dynamic_reconfigure::Server<global_planner::GlobalPlannerConfig>(ros::NodeHandle("~/" + name));
-        dynamic_reconfigure::Server<global_planner::GlobalPlannerConfig>::CallbackType cb = boost::bind(
-                &GlobalPlanner::reconfigureCB, this, _1, _2);
+        dsrv_ = new dynamic_reconfigure::Server<global_planner_plus::GlobalPlannerPlusConfig>(ros::NodeHandle("~/" + name));
+        dynamic_reconfigure::Server<global_planner_plus::GlobalPlannerPlusConfig>::CallbackType cb = boost::bind(
+                &GlobalPlannerPlus::reconfigureCB, this, _1, _2);
         dsrv_->setCallback(cb);
 
         initialized_ = true;
@@ -164,7 +164,7 @@ void GlobalPlanner::initialize(std::string name, costmap_2d::Costmap2D* costmap,
 
 }
 
-void GlobalPlanner::reconfigureCB(global_planner::GlobalPlannerConfig& config, uint32_t level) {
+void GlobalPlannerPlus::reconfigureCB(global_planner_plus::GlobalPlannerPlusConfig& config, uint32_t level) {
     planner_->setLethalCost(config.lethal_cost);
     path_maker_->setLethalCost(config.lethal_cost);
     planner_->setNeutralCost(config.neutral_cost);
@@ -173,7 +173,7 @@ void GlobalPlanner::reconfigureCB(global_planner::GlobalPlannerConfig& config, u
     orientation_filter_->setMode(config.orientation_mode);
 }
 
-void GlobalPlanner::clearRobotCell(const tf::Stamped<tf::Pose>& global_pose, unsigned int mx, unsigned int my) {
+void GlobalPlannerPlus::clearRobotCell(const tf::Stamped<tf::Pose>& global_pose, unsigned int mx, unsigned int my) {
     if (!initialized_) {
         ROS_ERROR(
                 "This planner has not been initialized yet, but it is being used, please call initialize() before use");
@@ -184,7 +184,7 @@ void GlobalPlanner::clearRobotCell(const tf::Stamped<tf::Pose>& global_pose, uns
     costmap_->setCost(mx, my, costmap_2d::FREE_SPACE);
 }
 
-bool GlobalPlanner::makePlanService(nav_msgs::GetPlan::Request& req, nav_msgs::GetPlan::Response& resp) {
+bool GlobalPlannerPlus::makePlanService(nav_msgs::GetPlan::Request& req, nav_msgs::GetPlan::Response& resp) {
     makePlan(req.start, req.goal, resp.plan.poses);
 
     resp.plan.header.stamp = ros::Time::now();
@@ -193,12 +193,12 @@ bool GlobalPlanner::makePlanService(nav_msgs::GetPlan::Request& req, nav_msgs::G
     return true;
 }
 
-void GlobalPlanner::mapToWorld(double mx, double my, double& wx, double& wy) {
+void GlobalPlannerPlus::mapToWorld(double mx, double my, double& wx, double& wy) {
     wx = costmap_->getOriginX() + (mx+convert_offset_) * costmap_->getResolution();
     wy = costmap_->getOriginY() + (my+convert_offset_) * costmap_->getResolution();
 }
 
-bool GlobalPlanner::worldToMap(double wx, double wy, double& mx, double& my) {
+bool GlobalPlannerPlus::worldToMap(double wx, double wy, double& mx, double& my) {
     double origin_x = costmap_->getOriginX(), origin_y = costmap_->getOriginY();
     double resolution = costmap_->getResolution();
 
@@ -214,12 +214,12 @@ bool GlobalPlanner::worldToMap(double wx, double wy, double& mx, double& my) {
     return false;
 }
 
-bool GlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal,
+bool GlobalPlannerPlus::makePlan(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal,
                            std::vector<geometry_msgs::PoseStamped>& plan) {
     return makePlan(start, goal, default_tolerance_, plan);
 }
 
-bool GlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal,
+bool GlobalPlannerPlus::makePlan(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal,
                            double tolerance, std::vector<geometry_msgs::PoseStamped>& plan) {
     boost::mutex::scoped_lock lock(mutex_);
     if (!initialized_) {
@@ -326,7 +326,7 @@ bool GlobalPlanner::makePlan(const geometry_msgs::PoseStamped& start, const geom
     return !plan.empty();
 }
 
-void GlobalPlanner::publishPlan(const std::vector<geometry_msgs::PoseStamped>& path) {
+void GlobalPlannerPlus::publishPlan(const std::vector<geometry_msgs::PoseStamped>& path) {
     if (!initialized_) {
         ROS_ERROR(
                 "This planner has not been initialized yet, but it is being used, please call initialize() before use");
@@ -348,7 +348,7 @@ void GlobalPlanner::publishPlan(const std::vector<geometry_msgs::PoseStamped>& p
     plan_pub_.publish(gui_path);
 }
 
-bool GlobalPlanner::getPlanFromPotential(double start_x, double start_y, double goal_x, double goal_y,
+bool GlobalPlannerPlus::getPlanFromPotential(double start_x, double start_y, double goal_x, double goal_y,
                                       const geometry_msgs::PoseStamped& goal,
                                        std::vector<geometry_msgs::PoseStamped>& plan) {
     if (!initialized_) {
@@ -394,7 +394,7 @@ bool GlobalPlanner::getPlanFromPotential(double start_x, double start_y, double 
     return !plan.empty();
 }
 
-void GlobalPlanner::publishPotential(float* potential)
+void GlobalPlannerPlus::publishPotential(float* potential)
 {
     int nx = costmap_->getSizeInCellsX(), ny = costmap_->getSizeInCellsY();
     double resolution = costmap_->getResolution();
@@ -435,5 +435,5 @@ void GlobalPlanner::publishPotential(float* potential)
     potential_pub_.publish(grid);
 }
 
-} //end namespace global_planner
+} //end namespace global_planner_plus
 
