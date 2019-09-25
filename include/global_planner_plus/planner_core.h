@@ -200,6 +200,7 @@ class GlobalPlannerPlus : public nav_core::BaseGlobalPlanner {
         unsigned int start_x_, start_y_, end_x_, end_y_;
 
         bool old_navfn_behavior_;
+        bool reverse_plan_;
         float convert_offset_;
 
         dynamic_reconfigure::Server<global_planner_plus::GlobalPlannerPlusConfig> *dsrv_;

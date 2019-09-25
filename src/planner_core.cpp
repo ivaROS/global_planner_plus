@@ -171,6 +171,7 @@ void GlobalPlannerPlus::reconfigureCB(global_planner_plus::GlobalPlannerPlusConf
     planner_->setFactor(config.cost_factor);
     publish_potential_ = config.publish_potential;
     orientation_filter_->setMode(config.orientation_mode);
+    reverse_plan_ = config.reverse_plan;
 }
 
 void GlobalPlannerPlus::clearRobotCell(const tf::Stamped<tf::Pose>& global_pose, unsigned int mx, unsigned int my) {
@@ -295,7 +296,12 @@ bool GlobalPlannerPlus::makePlan(const geometry_msgs::PoseStamped& start, const 
 
     outlineMap(costmap_->getCharMap(), nx, ny, costmap_2d::LETHAL_OBSTACLE);
 
-    bool found_legal = planner_->calculatePotentials(costmap_->getCharMap(), start_x, start_y, goal_x, goal_y,
+    double p_start_x = reverse_plan_ ? goal_x : start_x;
+    double p_start_y = reverse_plan_ ? goal_y : start_y;
+    double p_goal_x = reverse_plan_ ? start_x: goal_x;
+    double p_goal_y = reverse_plan_ ? start_y : goal_y;
+    
+    bool found_legal = planner_->calculatePotentials(costmap_->getCharMap(), p_start_x, p_start_y, p_goal_x, p_goal_y, 
                                                     nx * ny * 2, potential_array_);
 
     if(!old_navfn_behavior_)
@@ -305,7 +311,7 @@ bool GlobalPlannerPlus::makePlan(const geometry_msgs::PoseStamped& start, const 
 
     if (found_legal) {
         //extract the plan
-        if (getPlanFromPotential(start_x, start_y, goal_x, goal_y, goal, plan)) {
+        if (getPlanFromPotential(p_start_x, p_start_y, p_goal_x, p_goal_y, goal, plan)) {
             //make sure the goal we push on has the same timestamp as the rest of the plan
             geometry_msgs::PoseStamped goal_copy = goal;
             goal_copy.header.stamp = ros::Time::now();
@@ -315,6 +321,11 @@ bool GlobalPlannerPlus::makePlan(const geometry_msgs::PoseStamped& start, const 
         }
     }else{
         ROS_ERROR("Failed to get a plan.");
+    }
+    
+    if(reverse_plan_)
+    {
+        
     }
 
     // add orientations if needed
@@ -369,9 +380,13 @@ bool GlobalPlannerPlus::getPlanFromPotential(double start_x, double start_y, dou
         return false;
     }
 
+    int psize = path.size()-1;
+    
     ros::Time plan_time = ros::Time::now();
-    for (int i = path.size() -1; i>=0; i--) {
-        std::pair<float, float> point = path[i];
+    for (int i = psize; i>=0; i--) {
+        int ind = reverse_plan_ ? psize - i : i;
+      
+        std::pair<float, float> point = path[ind];
         //convert the plan to world coordinates
         double world_x, world_y;
         mapToWorld(point.first, point.second, world_x, world_y);
