@@ -322,11 +322,6 @@ bool GlobalPlannerPlus::makePlan(const geometry_msgs::PoseStamped& start, const 
     }else{
         ROS_ERROR("Failed to get a plan.");
     }
-    
-    if(reverse_plan_)
-    {
-        
-    }
 
     // add orientations if needed
     orientation_filter_->processPath(start, plan);
