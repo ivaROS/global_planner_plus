@@ -47,6 +47,7 @@
 #include <global_planner_plus/gradient_path.h>
 #include <global_planner_plus/quadratic_calculator.h>
 
+
 //register this planner as a BaseGlobalPlannerPlus plugin
 PLUGINLIB_EXPORT_CLASS(global_planner_plus::GlobalPlannerPlus, nav_core::BaseGlobalPlanner)
 
@@ -222,6 +223,12 @@ bool GlobalPlannerPlus::makePlan(const geometry_msgs::PoseStamped& start, const 
 
 bool GlobalPlannerPlus::makePlan(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal,
                            double tolerance, std::vector<geometry_msgs::PoseStamped>& plan) {
+    std::vector<geometry_msgs::Point> target_points;
+    return makePlan(start, goal, tolerance, target_points, plan);
+}
+
+bool GlobalPlannerPlus::makePlan(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal,
+                           double tolerance, const std::vector<geometry_msgs::Point>& target_points, std::vector<geometry_msgs::PoseStamped>& plan) {
     boost::mutex::scoped_lock lock(mutex_);
     if (!initialized_) {
         ROS_ERROR(
@@ -295,6 +302,52 @@ bool GlobalPlannerPlus::makePlan(const geometry_msgs::PoseStamped& start, const 
     potential_array_ = new float[nx * ny];
 
     outlineMap(costmap_->getCharMap(), nx, ny, costmap_2d::LETHAL_OBSTACLE);
+    
+    std::set<unsigned int> target_cells;
+    if(reverse_plan_)
+    {
+        for(auto point_msg : target_points)
+        {
+            unsigned int x_ind, y_ind;
+            if(costmap_->worldToMap(point_msg.x, point_msg.y, x_ind, y_ind))
+            {
+                unsigned int cell_ind = x_ind + nx * y_ind;
+                target_cells.emplace(cell_ind);
+            }
+        }
+        
+        double target_radius = 3;
+        double num_cells = target_radius / costmap_->getResolution();
+        double num_cells_min = num_cells - 0.5;
+        double num_cells_max = num_cells + 0.5;
+        
+        double num_cells_min_sq = num_cells_min*num_cells_min;
+        double num_cells_max_sq = num_cells_max*num_cells_max;
+        
+        
+        for(unsigned int x=0; x<nx; x++)
+        {
+            for(unsigned int y=0; y<ny; y++)
+            {
+                int dx = x-start_x;
+                int dy = y-start_y;
+                
+                unsigned int dist_sq = dx*dx + dy*dy;
+                
+                if(dist_sq < num_cells_max_sq)
+                {
+                    costmap_->setCost(x, y, costmap_2d::LETHAL_OBSTACLE);
+                  
+                    if(dist_sq > num_cells_min_sq)
+                    {
+                        unsigned int cell_ind = x + nx * y;
+                        target_cells.emplace(cell_ind);
+                    }
+                }
+            }
+        }
+      
+    }
 
     double p_start_x = reverse_plan_ ? goal_x : start_x;
     double p_start_y = reverse_plan_ ? goal_y : start_y;
@@ -302,7 +355,7 @@ bool GlobalPlannerPlus::makePlan(const geometry_msgs::PoseStamped& start, const 
     double p_goal_y = reverse_plan_ ? start_y : goal_y;
     
     bool found_legal = planner_->calculatePotentials(costmap_->getCharMap(), p_start_x, p_start_y, p_goal_x, p_goal_y, 
-                                                    nx * ny * 2, potential_array_);
+                                                    nx * ny * 2, target_cells, potential_array_);
 
     if(!old_navfn_behavior_)
         planner_->clearEndpoint(costmap_->getCharMap(), potential_array_, goal_x_i, goal_y_i, 2);

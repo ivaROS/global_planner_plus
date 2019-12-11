@@ -78,7 +78,7 @@ void DijkstraExpansion::setSize(int xs, int ys) {
 //
 
 bool DijkstraExpansion::calculatePotentials(unsigned char* costs, double start_x, double start_y, double end_x, double end_y,
-                                           int cycles, float* potential) {
+                                           int cycles, std::set<unsigned int>& target_cells, float* potential) {
     cells_visited_ = 0;
     // priority buffers
     threshold_ = lethal_cost_;
@@ -90,6 +90,8 @@ bool DijkstraExpansion::calculatePotentials(unsigned char* costs, double start_x
     overEnd_ = 0;
     memset(pending_, 0, ns_ * sizeof(bool));
     std::fill(potential, potential + ns_, POT_HIGH);
+    
+    //TODO: Fill set of goal cells with some specific value?
 
     // set goal
     int k = toIndex(start_x, start_y);
@@ -127,6 +129,7 @@ bool DijkstraExpansion::calculatePotentials(unsigned char* costs, double start_x
 
     // set up start cell
     int startCell = toIndex(end_x, end_y);
+    target_cells.emplace(startCell);
 
     for (; cycle < cycles; cycle++) // go for this many cycles, unless interrupted
             {
@@ -140,6 +143,7 @@ bool DijkstraExpansion::calculatePotentials(unsigned char* costs, double start_x
             nwv = currentEnd_;
 
         // reset pending_ flags on current priority buffer
+        // NOTE: Could this be replaced by a memset operation?
         int *pb = currentBuffer_;
         int i = currentEnd_;
         while (i-- > 0)
@@ -149,7 +153,7 @@ bool DijkstraExpansion::calculatePotentials(unsigned char* costs, double start_x
         pb = currentBuffer_;
         i = currentEnd_;
         while (i-- > 0)
-            updateCell(costs, potential, *pb++);
+            updateCell(costs, potential, *pb++, target_cells);
 
         // swap priority blocks currentBuffer_ <=> nextBuffer_
         currentEnd_ = nextEnd_;
@@ -169,8 +173,12 @@ bool DijkstraExpansion::calculatePotentials(unsigned char* costs, double start_x
         }
 
         // check if we've hit the Start cell
-        if (potential[startCell] < POT_HIGH)
+        //if (potential[startCell] < POT_HIGH)
+        //    break;
+        if(target_cells.empty())
+        {
             break;
+        }
     }
     //ROS_INFO("CYCLES %d/%d ", cycle, cycles);
     if (cycle < cycles)
@@ -189,13 +197,16 @@ bool DijkstraExpansion::calculatePotentials(unsigned char* costs, double start_x
 
 #define INVSQRT2 0.707106781
 
-inline void DijkstraExpansion::updateCell(unsigned char* costs, float* potential, int n) {
+inline void DijkstraExpansion::updateCell(unsigned char* costs, float* potential, int n, std::set<unsigned int>& target_cells) {
     cells_visited_++;
 
     // do planar wave update
     float c = getCost(costs, n);
     if (c >= lethal_cost_)    // don't propagate into obstacles
         return;
+    
+    //if its a target cell, remove from set
+    target_cells.erase(n);
 
     float pot = p_calc_->calculatePotential(potential, c, n);
 

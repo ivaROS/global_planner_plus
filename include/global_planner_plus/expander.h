@@ -40,6 +40,9 @@
 #include <global_planner_plus/potential_calculator.h>
 #include <global_planner_plus/planner_core.h>
 
+#include <set>
+
+
 namespace global_planner_plus {
 
 class Expander {
@@ -49,7 +52,16 @@ class Expander {
             setSize(nx, ny);
         }
         virtual bool calculatePotentials(unsigned char* costs, double start_x, double start_y, double end_x, double end_y,
-                                        int cycles, float* potential) = 0;
+                                        int cycles, float* potential)
+        {
+            std::set<unsigned int> target_cells;
+            return calculatePotentials(costs, start_x, start_y, end_x, end_y, cycles, target_cells, potential);
+        }
+                                        
+        virtual bool calculatePotentials(unsigned char* costs, double start_x, double start_y, double end_x, double end_y,
+                                         int cycles, std::set<unsigned int>& target_cells, float* potential) {}
+        
+                                        
 
         /**
          * @brief  Sets or resets the size of the map

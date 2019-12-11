@@ -114,6 +114,8 @@ class GlobalPlannerPlus : public nav_core::BaseGlobalPlanner {
         bool makePlan(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal, double tolerance,
                       std::vector<geometry_msgs::PoseStamped>& plan);
 
+        bool makePlan(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal,
+                 double tolerance, const std::vector<geometry_msgs::Point>& target_points, std::vector<geometry_msgs::PoseStamped>& plan);
         /**
          * @brief  Computes the full navigation function for the map given a point in the world to start from
          * @param world_point The point to use for seeding the navigation function

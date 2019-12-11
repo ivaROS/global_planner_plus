@@ -57,7 +57,7 @@ class DijkstraExpansion : public Expander {
     public:
         DijkstraExpansion(PotentialCalculator* p_calc, int nx, int ny);
         ~DijkstraExpansion();
-        bool calculatePotentials(unsigned char* costs, double start_x, double start_y, double end_x, double end_y, int cycles,
+        bool calculatePotentials(unsigned char* costs, double start_x, double start_y, double end_x, double end_y, int cycles, std::set<unsigned int>& target_cells,
                                 float* potential);
 
         /**
@@ -81,7 +81,7 @@ class DijkstraExpansion : public Expander {
          * @param potential The potential array in which we are calculating
          * @param n The index to update
          */
-        void updateCell(unsigned char* costs, float* potential, int n); /** updates the cell at index n */
+        void updateCell(unsigned char* costs, float* potential, int n, std::set<unsigned int>& target_cells); /** updates the cell at index n */
 
         float getCost(unsigned char* costs, int n) {
             float c = costs[n];
