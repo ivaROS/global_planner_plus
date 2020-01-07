@@ -173,6 +173,7 @@ void GlobalPlannerPlus::reconfigureCB(global_planner_plus::GlobalPlannerPlusConf
     publish_potential_ = config.publish_potential;
     orientation_filter_->setMode(config.orientation_mode);
     reverse_plan_ = config.reverse_plan;
+    target_radius_ = config.target_radius;
 }
 
 void GlobalPlannerPlus::clearRobotCell(const tf::Stamped<tf::Pose>& global_pose, unsigned int mx, unsigned int my) {
@@ -300,11 +301,15 @@ bool GlobalPlannerPlus::makePlan(const geometry_msgs::PoseStamped& start, const 
     planner_->setSize(nx, ny);
     path_maker_->setSize(nx, ny);
     potential_array_ = new float[nx * ny];
+    
+    //const unsigned char* const charmap = costmap_->getCharMap();
+    //std::vector<unsigned char> modified_map(charmap, charmap + (nx*ny));
 
+    //outlineMap(modified_map.data(), nx, ny, costmap_2d::LETHAL_OBSTACLE);
     outlineMap(costmap_->getCharMap(), nx, ny, costmap_2d::LETHAL_OBSTACLE);
     
     std::set<unsigned int> target_cells;
-    if(reverse_plan_)
+    if(target_radius_>0)
     {
         for(auto point_msg : target_points)
         {
@@ -316,8 +321,7 @@ bool GlobalPlannerPlus::makePlan(const geometry_msgs::PoseStamped& start, const 
             }
         }
         
-        double target_radius = 3;
-        double num_cells = target_radius / costmap_->getResolution();
+        double num_cells = target_radius_ / costmap_->getResolution();
         double num_cells_min = num_cells - 0.5;
         double num_cells_max = num_cells + 0.5;
         
@@ -335,13 +339,16 @@ bool GlobalPlannerPlus::makePlan(const geometry_msgs::PoseStamped& start, const 
                 unsigned int dist_sq = dx*dx + dy*dy;
                 
                 if(dist_sq < num_cells_max_sq)
-                {
-                    costmap_->setCost(x, y, costmap_2d::LETHAL_OBSTACLE);
-                  
+                {                  
                     if(dist_sq > num_cells_min_sq)
                     {
                         unsigned int cell_ind = x + nx * y;
                         target_cells.emplace(cell_ind);
+                    }
+                    else
+                    {
+                      
+                      //costmap_->setCost(x, y, costmap_2d::LETHAL_OBSTACLE);
                     }
                 }
             }
@@ -383,6 +390,133 @@ bool GlobalPlannerPlus::makePlan(const geometry_msgs::PoseStamped& start, const 
     publishPlan(plan);
     delete potential_array_;
     return !plan.empty();
+}
+
+
+
+bool GlobalPlannerPlus::updatePotentials(const geometry_msgs::Pose& start, const geometry_msgs::Pose& goal,
+                                 double tolerance, const std::vector<geometry_msgs::Point>& target_points, std::vector<float>& potential_vector) {
+  boost::mutex::scoped_lock lock(mutex_);
+  if (!initialized_) {
+    ROS_ERROR(
+      "This planner has not been initialized yet, but it is being used, please call initialize() before use");
+    return false;
+  }
+  
+  double wx = start.position.x;
+  double wy = start.position.y;
+  
+  unsigned int start_x_i, start_y_i, goal_x_i, goal_y_i;
+  double start_x, start_y, goal_x, goal_y;
+  
+  if (!costmap_->worldToMap(wx, wy, start_x_i, start_y_i)) {
+    ROS_WARN(
+      "The robot's start position is off the global costmap. Planning will always fail, are you sure the robot has been properly localized?");
+    return false;
+  }
+  if(old_navfn_behavior_){
+    start_x = start_x_i;
+    start_y = start_y_i;
+  }else{
+    worldToMap(wx, wy, start_x, start_y);
+  }
+  
+  wx = goal.position.x;
+  wy = goal.position.y;
+  
+  if (!costmap_->worldToMap(wx, wy, goal_x_i, goal_y_i)) {
+    ROS_WARN_THROTTLE(1.0,
+                      "The goal sent to the global planner is off the global costmap. Planning will always fail to this goal.");
+    return false;
+  }
+  if(old_navfn_behavior_){
+    goal_x = goal_x_i;
+    goal_y = goal_y_i;
+  }else{
+    worldToMap(wx, wy, goal_x, goal_y);
+  }
+  
+  //clear the starting cell within the costmap because we know it can't be an obstacle
+  tf::Stamped<tf::Pose> start_pose;
+  //tf::poseStampedMsgToTF(start, start_pose);  //'start_pose' isn't used for anything! Why is it even an input argument to the next line?
+  clearRobotCell(start_pose, start_x_i, start_y_i);
+  
+  int nx = costmap_->getSizeInCellsX(), ny = costmap_->getSizeInCellsY();
+  
+  //make sure to resize the underlying array that Navfn uses
+  p_calc_->setSize(nx, ny);
+  planner_->setSize(nx, ny);
+  path_maker_->setSize(nx, ny);
+  potential_vector.resize(nx * ny);
+  
+  //const unsigned char* const charmap = costmap_->getCharMap();
+  //std::vector<unsigned char> modified_map(charmap, charmap + (nx*ny));
+  
+  //outlineMap(modified_map.data(), nx, ny, costmap_2d::LETHAL_OBSTACLE);
+  outlineMap(costmap_->getCharMap(), nx, ny, costmap_2d::LETHAL_OBSTACLE);
+  
+  std::set<unsigned int> target_cells;
+  if(target_radius_>0)
+  {
+    for(auto point_msg : target_points)
+    {
+      unsigned int x_ind, y_ind;
+      if(costmap_->worldToMap(point_msg.x, point_msg.y, x_ind, y_ind))
+      {
+        unsigned int cell_ind = x_ind + nx * y_ind;
+        target_cells.emplace(cell_ind);
+      }
+    }
+    
+    double num_cells = target_radius_ / costmap_->getResolution();
+    double num_cells_min = num_cells - 0.5;
+    double num_cells_max = num_cells + 0.5;
+    
+    double num_cells_min_sq = num_cells_min*num_cells_min;
+    double num_cells_max_sq = num_cells_max*num_cells_max;
+    
+    
+    for(unsigned int x=0; x<nx; x++)
+    {
+      for(unsigned int y=0; y<ny; y++)
+      {
+        int dx = x-start_x;
+        int dy = y-start_y;
+        
+        unsigned int dist_sq = dx*dx + dy*dy;
+        
+        if(dist_sq < num_cells_max_sq)
+        {                  
+          if(dist_sq > num_cells_min_sq)
+          {
+            unsigned int cell_ind = x + nx * y;
+            target_cells.emplace(cell_ind);
+          }
+          else
+          {
+            
+            //costmap_->setCost(x, y, costmap_2d::LETHAL_OBSTACLE);
+          }
+        }
+      }
+    }
+    
+  }
+  
+  double p_start_x = reverse_plan_ ? goal_x : start_x;
+  double p_start_y = reverse_plan_ ? goal_y : start_y;
+  double p_goal_x = reverse_plan_ ? start_x: goal_x;
+  double p_goal_y = reverse_plan_ ? start_y : goal_y;
+  
+  bool found_legal = planner_->calculatePotentials(costmap_->getCharMap(), p_start_x, p_start_y, p_goal_x, p_goal_y, 
+                                                   nx * ny * 2, target_cells, potential_vector.data());
+  
+  if(!old_navfn_behavior_)
+    planner_->clearEndpoint(costmap_->getCharMap(), potential_vector.data(), goal_x_i, goal_y_i, 2);
+  if(publish_potential_)
+    publishPotential(potential_vector.data());
+  
+  return found_legal;
 }
 
 void GlobalPlannerPlus::publishPlan(const std::vector<geometry_msgs::PoseStamped>& path) {

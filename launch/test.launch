@@ -1,6 +1,9 @@
 <launch>
+  <arg name="debug" default="false"/>
+  <arg name="debug_prefix" default="xterm -e gdb --args" if="$(arg debug)"/>
+  <arg name="debug_prefix" default="" unless="$(arg debug)"/>
 
-  <node name="planner_node" pkg="global_planner_plus" type="planner" output="screen" launch-prefix="xterm -e gdb --args">
+  <node name="planner_node" pkg="global_planner_plus" type="planner" output="screen" launch-prefix="$(arg debug_prefix)">
     <remap from="planner_node/goal" to="/move_base_simple/goal"/>
     <remap from="global_costmap" to="costmap"/>
     <rosparam file="$(find nav_configs)/config/common_costmap_params.yaml" command="load" ns="costmap"/>

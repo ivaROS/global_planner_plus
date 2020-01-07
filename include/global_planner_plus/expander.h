@@ -51,15 +51,9 @@ class Expander {
                 unknown_(true), lethal_cost_(253), neutral_cost_(50), factor_(3.0), p_calc_(p_calc) {
             setSize(nx, ny);
         }
-        virtual bool calculatePotentials(unsigned char* costs, double start_x, double start_y, double end_x, double end_y,
-                                        int cycles, float* potential)
-        {
-            std::set<unsigned int> target_cells;
-            return calculatePotentials(costs, start_x, start_y, end_x, end_y, cycles, target_cells, potential);
-        }
                                         
         virtual bool calculatePotentials(unsigned char* costs, double start_x, double start_y, double end_x, double end_y,
-                                         int cycles, std::set<unsigned int>& target_cells, float* potential) {}
+                                         int cycles, std::set<unsigned int>& target_cells, float* potential)=0;
         
                                         
 

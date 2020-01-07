@@ -45,7 +45,7 @@ AStarExpansion::AStarExpansion(PotentialCalculator* p_calc, int xs, int ys) :
 }
 
 bool AStarExpansion::calculatePotentials(unsigned char* costs, double start_x, double start_y, double end_x, double end_y,
-                                        int cycles, float* potential) {
+                                         int cycles,  std::set<unsigned int>& target_cells, float* potential) {
     queue_.clear();
     int start_i = toIndex(start_x, start_y);
     queue_.push_back(Index(start_i, 0));
@@ -54,6 +54,7 @@ bool AStarExpansion::calculatePotentials(unsigned char* costs, double start_x, d
     potential[start_i] = 0;
 
     int goal_i = toIndex(end_x, end_y);
+    target_cells.insert(goal_i);
     int cycle = 0;
 
     while (queue_.size() > 0 && cycle < cycles) {
@@ -62,8 +63,16 @@ bool AStarExpansion::calculatePotentials(unsigned char* costs, double start_x, d
         queue_.pop_back();
 
         int i = top.i;
-        if (i == goal_i)
-            return true;
+        //if (i == goal_i)
+        //    return true;
+        if(target_cells.erase(i))
+        {
+          ROS_INFO_STREAM("Removed index " << i << " from target list. " << target_cells.size() << " cells remaining.");
+        }
+        if(target_cells.size()==0)
+        {
+          return true;
+        }
 
         add(costs, potential, potential[i], i + 1, end_x, end_y);
         add(costs, potential, potential[i], i - 1, end_x, end_y);
@@ -89,7 +98,10 @@ void AStarExpansion::add(unsigned char* costs, float* potential, float prev_pote
 
     potential[next_i] = p_calc_->calculatePotential(potential, costs[next_i] + neutral_cost_, next_i, prev_potential);
     int x = next_i % nx_, y = next_i / nx_;
-    float distance = abs(end_x - x) + abs(end_y - y);
+    
+    //NOTE: Using Manhattan distance here, would Euclidean distance give better (more optimal) paths?
+    //float distance = abs(end_x - x) + abs(end_y - y);
+    float distance = std::sqrt((end_x-x)*(end_x-x) + (end_y-y)*(end_y-y));
 
     queue_.push_back(Index(next_i, potential[next_i] + distance * neutral_cost_));
     std::push_heap(queue_.begin(), queue_.end(), greater1());

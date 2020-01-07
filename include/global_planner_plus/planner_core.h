@@ -116,6 +116,10 @@ class GlobalPlannerPlus : public nav_core::BaseGlobalPlanner {
 
         bool makePlan(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal,
                  double tolerance, const std::vector<geometry_msgs::Point>& target_points, std::vector<geometry_msgs::PoseStamped>& plan);
+        
+        bool updatePotentials(const geometry_msgs::Pose& start, const geometry_msgs::Pose& goal,
+                 double tolerance, const std::vector<geometry_msgs::Point>& target_points, std::vector<float>& potential_vector);
+        
         /**
          * @brief  Computes the full navigation function for the map given a point in the world to start from
          * @param world_point The point to use for seeding the navigation function
@@ -203,6 +207,7 @@ class GlobalPlannerPlus : public nav_core::BaseGlobalPlanner {
 
         bool old_navfn_behavior_;
         bool reverse_plan_;
+        float target_radius_;
         float convert_offset_;
 
         dynamic_reconfigure::Server<global_planner_plus::GlobalPlannerPlusConfig> *dsrv_;

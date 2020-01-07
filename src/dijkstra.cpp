@@ -132,10 +132,24 @@ bool DijkstraExpansion::calculatePotentials(unsigned char* costs, double start_x
     target_cells.emplace(startCell);
 
     for (; cycle < cycles; cycle++) // go for this many cycles, unless interrupted
-            {
+    {
         // 
         if (currentEnd_ == 0 && nextEnd_ == 0) // priority blocks empty
+        {
+          return false;
+          if(target_cells.size()==0)
+          {
             return false;
+          }
+          else
+          {
+            for(auto ind : target_cells)
+            {
+              push_cur(ind);
+            }
+            target_cells.clear();
+          }
+        }
 
         // stats
         nc += currentEnd_;
@@ -175,10 +189,12 @@ bool DijkstraExpansion::calculatePotentials(unsigned char* costs, double start_x
         // check if we've hit the Start cell
         //if (potential[startCell] < POT_HIGH)
         //    break;
-        if(target_cells.empty())
-        {
-            break;
-        }
+        
+        /* Currently want expansion to continue until all possible cells have been visited */
+        //if(target_cells.empty())
+        //{
+        //    break;
+        //}
     }
     //ROS_INFO("CYCLES %d/%d ", cycle, cycles);
     if (cycle < cycles)
@@ -195,6 +211,7 @@ bool DijkstraExpansion::calculatePotentials(unsigned char* costs, double start_x
 // No checking of bounds here, this function should be fast
 //
 
+//TODO: Replace with constexpr
 #define INVSQRT2 0.707106781
 
 inline void DijkstraExpansion::updateCell(unsigned char* costs, float* potential, int n, std::set<unsigned int>& target_cells) {
@@ -206,7 +223,14 @@ inline void DijkstraExpansion::updateCell(unsigned char* costs, float* potential
         return;
     
     //if its a target cell, remove from set
-    target_cells.erase(n);
+    auto search = target_cells.find(n);
+    if(search != target_cells.end())
+    {
+        ROS_INFO_STREAM("Ignoring index " << n);
+        //ROS_INFO_STREAM("Removed index " << n << " from target list. " << target_cells.size() << " cells remaining.");
+        
+        return;
+    }
 
     float pot = p_calc_->calculatePotential(potential, c, n);
 
