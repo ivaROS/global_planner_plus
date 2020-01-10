@@ -13,6 +13,17 @@ find_package(catkin REQUIRED
     pluginlib
     roscpp
     tf
+    message_generation
+)
+
+add_message_files(
+  FILES
+  PotentialGrid.msg
+)
+
+generate_messages(
+  DEPENDENCIES
+  nav_msgs
 )
 
 generate_dynamic_reconfigure_options(
@@ -32,6 +43,7 @@ catkin_package(
     pluginlib
     roscpp
     tf
+    message_runtime
 )
 
 include_directories(

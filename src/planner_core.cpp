@@ -137,6 +137,8 @@ void GlobalPlannerPlus::initialize(std::string name, costmap_2d::Costmap2D* cost
 
         plan_pub_ = private_nh.advertise<nav_msgs::Path>("plan", 1);
         potential_pub_ = private_nh.advertise<nav_msgs::OccupancyGrid>("potential", 1);
+        raw_potential_pub_ = private_nh.advertise<PotentialGrid>("raw_potential", 1);
+        
 
         private_nh.param("allow_unknown", allow_unknown_, true);
         planner_->setHasUnknown(allow_unknown_);
@@ -215,6 +217,20 @@ bool GlobalPlannerPlus::worldToMap(double wx, double wy, double& mx, double& my)
         return true;
 
     return false;
+}
+
+void GlobalPlannerPlus::updatePotentialMsg()
+{
+  int nx = costmap_->getSizeInCellsX(), ny = costmap_->getSizeInCellsY();
+  
+  potential_msg_ = boost::make_shared<PotentialGrid>();
+  potential_msg_->data.resize(nx*ny);
+//   potential_msg_->info.resolution = costmap_->getResolution();
+//   potential_msg_->info.width = nx;
+//   potential_msg_->info.height = ny;
+//   potential_msg_->header.frame_id = costmap_->getGlobalFrameID();
+  
+  potential_array_ = potential_msg_->data.data();
 }
 
 bool GlobalPlannerPlus::makePlan(const geometry_msgs::PoseStamped& start, const geometry_msgs::PoseStamped& goal,
@@ -302,6 +318,8 @@ bool GlobalPlannerPlus::makePlan(const geometry_msgs::PoseStamped& start, const 
     path_maker_->setSize(nx, ny);
     potential_array_ = new float[nx * ny];
     
+    updatePotentialMsg();
+    
     //const unsigned char* const charmap = costmap_->getCharMap();
     //std::vector<unsigned char> modified_map(charmap, charmap + (nx*ny));
 
@@ -367,7 +385,7 @@ bool GlobalPlannerPlus::makePlan(const geometry_msgs::PoseStamped& start, const 
     if(!old_navfn_behavior_)
         planner_->clearEndpoint(costmap_->getCharMap(), potential_array_, goal_x_i, goal_y_i, 2);
     if(publish_potential_)
-        publishPotential(potential_array_);
+        publishPotential();
 
     if (found_legal) {
         //extract the plan
@@ -388,7 +406,7 @@ bool GlobalPlannerPlus::makePlan(const geometry_msgs::PoseStamped& start, const 
     
     //publish the plan for visualization purposes
     publishPlan(plan);
-    delete potential_array_;
+    //delete potential_array_;
     return !plan.empty();
 }
 
@@ -446,9 +464,8 @@ bool GlobalPlannerPlus::updatePotentials(const geometry_msgs::Pose& start, const
   //make sure to resize the underlying array that Navfn uses
   p_calc_->setSize(nx, ny);
   planner_->setSize(nx, ny);
-  path_maker_->setSize(nx, ny);
-  potential_array_ = new float[nx * ny];
   
+  updatePotentialMsg();
   
   //const unsigned char* const charmap = costmap_->getCharMap();
   //std::vector<unsigned char> modified_map(charmap, charmap + (nx*ny));
@@ -515,7 +532,7 @@ bool GlobalPlannerPlus::updatePotentials(const geometry_msgs::Pose& start, const
   if(!old_navfn_behavior_)
     planner_->clearEndpoint(costmap_->getCharMap(), potential_array_, goal_x_i, goal_y_i, 2);
   if(publish_potential_)
-    publishPotential(potential_array_);
+    publishPotential();
   
   return found_legal;
 }
@@ -592,45 +609,67 @@ bool GlobalPlannerPlus::getPlanFromPotential(double start_x, double start_y, dou
     return !plan.empty();
 }
 
-void GlobalPlannerPlus::publishPotential(float* potential_array)
+void GlobalPlannerPlus::publishPotential()
 {
-    int nx = costmap_->getSizeInCellsX(), ny = costmap_->getSizeInCellsY();
-    double resolution = costmap_->getResolution();
-    nav_msgs::OccupancyGrid grid;
-    // Publish Whole Grid
-    grid.header.frame_id = frame_id_;
-    grid.header.stamp = ros::Time::now();
-    grid.info.resolution = resolution;
+    if(potential_pub_.getNumSubscribers()>0 || raw_potential_pub_.getNumSubscribers()>0)
+    {
+        int nx = costmap_->getSizeInCellsX(), ny = costmap_->getSizeInCellsY();
+        double resolution = costmap_->getResolution();
+        
+        std_msgs::Header header;
+        // Publish Whole Grid
+        header.frame_id = frame_id_;
+        header.stamp = ros::Time::now();  //I'd much rather use the time of the most recent update to the costmap or something, if possible
+        
+        nav_msgs::MapMetaData info;
+        info.resolution = resolution;
+        
+        info.width = nx;
+        info.height = ny;
 
-    grid.info.width = nx;
-    grid.info.height = ny;
+        double wx, wy;
+        costmap_->mapToWorld(0, 0, wx, wy);
+        info.origin.position.x = wx - resolution / 2;
+        info.origin.position.y = wy - resolution / 2;
+        info.origin.position.z = 0.0;
+        info.origin.orientation.w = 1.0;
 
-    double wx, wy;
-    costmap_->mapToWorld(0, 0, wx, wy);
-    grid.info.origin.position.x = wx - resolution / 2;
-    grid.info.origin.position.y = wy - resolution / 2;
-    grid.info.origin.position.z = 0.0;
-    grid.info.origin.orientation.w = 1.0;
+        
+        if(potential_pub_.getNumSubscribers()>0)
+        {
+            nav_msgs::OccupancyGrid::Ptr grid = boost::make_shared<nav_msgs::OccupancyGrid>();
+            grid->header = header;
+            grid->info = info;
+        
+            grid->data.resize(nx * ny);
 
-    grid.data.resize(nx * ny);
-
-    float max = 0.0;
-    for (unsigned int i = 0; i < grid.data.size(); i++) {
-        float potential = potential_array[i];
-        if (potential < POT_HIGH) {
-            if (potential > max) {
-                max = potential;
+            float max = 0.0;
+            for (unsigned int i = 0; i < grid->data.size(); i++) {
+                float potential = potential_array_[i];
+                if (potential < POT_HIGH) {
+                    if (potential > max) {
+                        max = potential;
+                    }
+                }
             }
+
+            for (unsigned int i = 0; i < grid->data.size(); i++) {
+                if (potential_array_[i] >= POT_HIGH) {
+                    grid->data[i] = -1;
+                } else
+                    grid->data[i] = potential_array_[i] * publish_scale_ / max;
+            }
+            potential_pub_.publish((nav_msgs::OccupancyGrid::ConstPtr)grid);
+        }
+        
+        if(raw_potential_pub_.getNumSubscribers()>0)
+        {
+          potential_msg_->header = header;
+          potential_msg_->info = info;
+          
+          raw_potential_pub_.publish((PotentialGrid::ConstPtr)potential_msg_);
         }
     }
-
-    for (unsigned int i = 0; i < grid.data.size(); i++) {
-        if (potential_array[i] >= POT_HIGH) {
-            grid.data[i] = -1;
-        } else
-            grid.data[i] = potential_array[i] * publish_scale_ / max;
-    }
-    potential_pub_.publish(grid);
 }
 
 /* The 3 following functions are basically copied from navfn:navfn_ros.cpp */

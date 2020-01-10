@@ -136,19 +136,7 @@ bool DijkstraExpansion::calculatePotentials(unsigned char* costs, double start_x
         // 
         if (currentEnd_ == 0 && nextEnd_ == 0) // priority blocks empty
         {
-          return false;
-          if(target_cells.size()==0)
-          {
-            return false;
-          }
-          else
-          {
-            for(auto ind : target_cells)
-            {
-              push_cur(ind);
-            }
-            target_cells.clear();
-          }
+          return target_cells.size()==0;
         }
 
         // stats
@@ -223,14 +211,19 @@ inline void DijkstraExpansion::updateCell(unsigned char* costs, float* potential
         return;
     
     //if its a target cell, remove from set
-    auto search = target_cells.find(n);
-    if(search != target_cells.end())
+    if(target_cells.erase(n))
     {
-        ROS_INFO_STREAM("Ignoring index " << n);
-        //ROS_INFO_STREAM("Removed index " << n << " from target list. " << target_cells.size() << " cells remaining.");
-        
-        return;
+        ROS_INFO_STREAM("Removed index " << n << " from target list. " << target_cells.size() << " cells remaining.");
     }
+    
+//     auto search = target_cells.find(n);
+//     if(search != target_cells.end())
+//     {
+//         ROS_INFO_STREAM("Ignoring index " << n);
+//         //ROS_INFO_STREAM("Removed index " << n << " from target list. " << target_cells.size() << " cells remaining.");
+//         
+//         return;
+//     }
 
     float pot = p_calc_->calculatePotential(potential, c, n);
 

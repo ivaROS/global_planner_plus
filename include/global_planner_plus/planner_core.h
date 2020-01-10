@@ -53,6 +53,7 @@
 #include <global_planner_plus/traceback.h>
 #include <global_planner_plus/orientation_filter.h>
 #include <global_planner_plus/GlobalPlannerPlusConfig.h>
+#include <global_planner_plus/PotentialGrid.h>
 
 namespace global_planner_plus {
 
@@ -184,7 +185,8 @@ class GlobalPlannerPlus : public nav_core::BaseGlobalPlanner {
         void mapToWorld(double mx, double my, double& wx, double& wy);
         bool worldToMap(double wx, double wy, double& mx, double& my);
         void clearRobotCell(const tf::Stamped<tf::Pose>& global_pose, unsigned int mx, unsigned int my);
-        void publishPotential(float* potential);
+        void publishPotential();
+        void updatePotentialMsg();
 
         double planner_window_x_, planner_window_y_, default_tolerance_;
         std::string tf_prefix_;
@@ -197,12 +199,14 @@ class GlobalPlannerPlus : public nav_core::BaseGlobalPlanner {
         OrientationFilter* orientation_filter_;
 
         bool publish_potential_;
-        ros::Publisher potential_pub_;
+        ros::Publisher potential_pub_, raw_potential_pub_;
         int publish_scale_;
 
         void outlineMap(unsigned char* costarr, int nx, int ny, unsigned char value);
         unsigned char* cost_array_;
         float* potential_array_;
+        PotentialGrid::Ptr potential_msg_;
+        
         unsigned int start_x_, start_y_, end_x_, end_y_;
 
         bool old_navfn_behavior_;
