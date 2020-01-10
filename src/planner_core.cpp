@@ -395,7 +395,7 @@ bool GlobalPlannerPlus::makePlan(const geometry_msgs::PoseStamped& start, const 
 
 
 bool GlobalPlannerPlus::updatePotentials(const geometry_msgs::Pose& start, const geometry_msgs::Pose& goal,
-                                 double tolerance, const std::vector<geometry_msgs::Point>& target_points, std::vector<float>& potential_vector) {
+                                 double tolerance, const std::vector<geometry_msgs::Point>& target_points) {
   boost::mutex::scoped_lock lock(mutex_);
   if (!initialized_) {
     ROS_ERROR(
@@ -447,7 +447,8 @@ bool GlobalPlannerPlus::updatePotentials(const geometry_msgs::Pose& start, const
   p_calc_->setSize(nx, ny);
   planner_->setSize(nx, ny);
   path_maker_->setSize(nx, ny);
-  potential_vector.resize(nx * ny);
+  potential_array_ = new float[nx * ny];
+  
   
   //const unsigned char* const charmap = costmap_->getCharMap();
   //std::vector<unsigned char> modified_map(charmap, charmap + (nx*ny));
@@ -485,9 +486,9 @@ bool GlobalPlannerPlus::updatePotentials(const geometry_msgs::Pose& start, const
         
         unsigned int dist_sq = dx*dx + dy*dy;
         
-        if(dist_sq < num_cells_max_sq)
+        if(dist_sq <= num_cells_max_sq)
         {                  
-          if(dist_sq > num_cells_min_sq)
+          if(dist_sq >= num_cells_min_sq)
           {
             unsigned int cell_ind = x + nx * y;
             target_cells.emplace(cell_ind);
@@ -509,12 +510,12 @@ bool GlobalPlannerPlus::updatePotentials(const geometry_msgs::Pose& start, const
   double p_goal_y = reverse_plan_ ? start_y : goal_y;
   
   bool found_legal = planner_->calculatePotentials(costmap_->getCharMap(), p_start_x, p_start_y, p_goal_x, p_goal_y, 
-                                                   nx * ny * 2, target_cells, potential_vector.data());
+                                                   nx * ny * 2, target_cells, potential_array_);
   
   if(!old_navfn_behavior_)
-    planner_->clearEndpoint(costmap_->getCharMap(), potential_vector.data(), goal_x_i, goal_y_i, 2);
+    planner_->clearEndpoint(costmap_->getCharMap(), potential_array_, goal_x_i, goal_y_i, 2);
   if(publish_potential_)
-    publishPotential(potential_vector.data());
+    publishPotential(potential_array_);
   
   return found_legal;
 }
@@ -591,7 +592,7 @@ bool GlobalPlannerPlus::getPlanFromPotential(double start_x, double start_y, dou
     return !plan.empty();
 }
 
-void GlobalPlannerPlus::publishPotential(float* potential)
+void GlobalPlannerPlus::publishPotential(float* potential_array)
 {
     int nx = costmap_->getSizeInCellsX(), ny = costmap_->getSizeInCellsY();
     double resolution = costmap_->getResolution();
@@ -615,7 +616,7 @@ void GlobalPlannerPlus::publishPotential(float* potential)
 
     float max = 0.0;
     for (unsigned int i = 0; i < grid.data.size(); i++) {
-        float potential = potential_array_[i];
+        float potential = potential_array[i];
         if (potential < POT_HIGH) {
             if (potential > max) {
                 max = potential;
@@ -624,13 +625,62 @@ void GlobalPlannerPlus::publishPotential(float* potential)
     }
 
     for (unsigned int i = 0; i < grid.data.size(); i++) {
-        if (potential_array_[i] >= POT_HIGH) {
+        if (potential_array[i] >= POT_HIGH) {
             grid.data[i] = -1;
         } else
-            grid.data[i] = potential_array_[i] * publish_scale_ / max;
+            grid.data[i] = potential_array[i] * publish_scale_ / max;
     }
     potential_pub_.publish(grid);
 }
+
+/* The 3 following functions are basically copied from navfn:navfn_ros.cpp */
+bool GlobalPlannerPlus::validPointPotential(const geometry_msgs::Point& world_point){
+  return validPointPotential(world_point, default_tolerance_);
+}
+
+bool GlobalPlannerPlus::validPointPotential(const geometry_msgs::Point& world_point, double tolerance){
+  if(!initialized_){
+    ROS_ERROR("This planner has not been initialized yet, but it is being used, please call initialize() before use");
+    return false;
+  }
+  
+  double resolution = costmap_->getResolution();
+  geometry_msgs::Point p;
+  p = world_point;
+  
+  p.y = world_point.y - tolerance;
+  
+  while(p.y <= world_point.y + tolerance){
+    p.x = world_point.x - tolerance;
+    while(p.x <= world_point.x + tolerance){
+      double potential = getPointPotential(p);
+      if(potential < POT_HIGH){
+        return true;
+      }
+      p.x += resolution;
+    }
+    p.y += resolution;
+  }
+  
+  return false;
+}
+
+double GlobalPlannerPlus::getPointPotential(const geometry_msgs::Point& world_point){
+  if(!initialized_){
+    ROS_ERROR("This planner has not been initialized yet, but it is being used, please call initialize() before use");
+    return -1.0;
+  }
+  
+  unsigned int mx, my;
+  if(!costmap_->worldToMap(world_point.x, world_point.y, mx, my))
+    return DBL_MAX;
+  
+  int nx = costmap_->getSizeInCellsX(), ny = costmap_->getSizeInCellsY();
+  
+  unsigned int index = my * nx + mx;
+  return potential_array_[index];
+}
+
 
 } //end namespace global_planner_plus
 

@@ -118,7 +118,7 @@ class GlobalPlannerPlus : public nav_core::BaseGlobalPlanner {
                  double tolerance, const std::vector<geometry_msgs::Point>& target_points, std::vector<geometry_msgs::PoseStamped>& plan);
         
         bool updatePotentials(const geometry_msgs::Pose& start, const geometry_msgs::Pose& goal,
-                 double tolerance, const std::vector<geometry_msgs::Point>& target_points, std::vector<float>& potential_vector);
+                 double tolerance, const std::vector<geometry_msgs::Point>& target_points);
         
         /**
          * @brief  Computes the full navigation function for the map given a point in the world to start from
@@ -169,7 +169,7 @@ class GlobalPlannerPlus : public nav_core::BaseGlobalPlanner {
         void publishPlan(const std::vector<geometry_msgs::PoseStamped>& path);
 
         bool makePlanService(nav_msgs::GetPlan::Request& req, nav_msgs::GetPlan::Response& resp);
-
+        
     protected:
 
         /**
