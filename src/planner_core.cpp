@@ -136,8 +136,8 @@ void GlobalPlannerPlus::initialize(std::string name, costmap_2d::Costmap2D* cost
         orientation_filter_ = new OrientationFilter();
 
         plan_pub_ = private_nh.advertise<nav_msgs::Path>("plan", 1);
-        potential_pub_ = private_nh.advertise<nav_msgs::OccupancyGrid>("potential", 1);
-        raw_potential_pub_ = private_nh.advertise<PotentialGrid>("raw_potential", 1);
+        potential_pub_ = private_nh.advertise<nav_msgs::OccupancyGrid>("potential", 1, true);
+        raw_potential_pub_ = private_nh.advertise<PotentialGrid>("raw_potential", 1, true);
         
 
         private_nh.param("allow_unknown", allow_unknown_, true);
