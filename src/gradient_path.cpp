@@ -106,167 +106,167 @@ bool GradientPath::getPath(float* potential, double start_x, double start_y, dou
     if (npath > 2 && path[npath - 1].first == path[npath - 3].first
       && path[npath - 1].second == path[npath - 3].second) {
       ROS_DEBUG("[PathCalc] oscillation detected, attempting fix.");
-    oscillation_detected = true;
+      oscillation_detected = true;
+    }
+      
+    int stcnx = stc + xs_;
+    int stcpx = stc - xs_;
+    
+    
+    int minc = stc;
+    float vx =0, vy=0;
+    
+    {
+      float minp = potential[stc];
+      int st = stcpx - 1;
+      if (potential[st] < minp) {
+        minp = potential[st];
+        minc = st;
+        vx=-1;
+        vy=-1;
+      }
+      st++;
+      if (potential[st] < minp) {
+        minp = potential[st];
+        minc = st;
+        vx=0;
+        vy=-1;
+      }
+      st++;
+      if (potential[st] < minp) {
+        minp = potential[st];
+        minc = st;
+        vx=1;
+        vy=-1;
+      }
+      st = stc - 1;
+      if (potential[st] < minp) {
+        minp = potential[st];
+        minc = st;
+        vx=-1;
+        vy=0;
+      }
+      st = stc + 1;
+      if (potential[st] < minp) {
+        minp = potential[st];
+        minc = st;
+        vx=1;
+        vy=0;
+      }
+      st = stcnx - 1;
+      if (potential[st] < minp) {
+        minp = potential[st];
+        minc = st;
+        vx=-1;
+        vy=1;
+      }
+      st++;
+      if (potential[st] < minp) {
+        minp = potential[st];
+        minc = st;
+        vx=0;
+        vy=1;
+      }
+      st++;
+      if (potential[st] < minp) {
+        minp = potential[st];
+        minc = st;
+        vx=1;
+        vy=1;
+      }
+    }
+      
+    bool follow_grid = true;
+    // check for potentials at eight positions near cell
+    if (potential[stc] >= POT_HIGH || potential[stc + 1] >= POT_HIGH || potential[stc - 1] >= POT_HIGH
+      || potential[stcnx] >= POT_HIGH || potential[stcnx + 1] >= POT_HIGH || potential[stcnx - 1] >= POT_HIGH
+      || potential[stcpx] >= POT_HIGH || potential[stcpx + 1] >= POT_HIGH || potential[stcpx - 1] >= POT_HIGH
+      || oscillation_detected) {
+      ROS_DEBUG("[Path] Pot fn boundary, following grid (%0.1f/%d)", potential[stc], (int) path.size());
+    // check eight neighbors to find the lowest
+    }
+    else
+    {
+      // get grad at four positions near cell
+      gradCell(potential, stc);
+      gradCell(potential, stc + 1);
+      gradCell(potential, stcnx);
+      gradCell(potential, stcnx + 1);
+      
+      // get interpolated gradient
+      float x1 = (1.0 - dx) * gradx_[stc] + dx * gradx_[stc + 1];
+      float x2 = (1.0 - dx) * gradx_[stcnx] + dx * gradx_[stcnx + 1];
+      float x = (1.0 - dy) * x1 + dy * x2; // interpolated x
+      float y1 = (1.0 - dx) * grady_[stc] + dx * grady_[stc + 1];
+      float y2 = (1.0 - dx) * grady_[stcnx] + dx * grady_[stcnx + 1];
+      float y = (1.0 - dy) * y1 + dy * y2; // interpolated y
+      
+      // show gradients
+      ROS_DEBUG(
+        "[Path] %0.2f,%0.2f  %0.2f,%0.2f  %0.2f,%0.2f  %0.2f,%0.2f; final x=%.3f, y=%.3f\n", gradx_[stc], grady_[stc], gradx_[stc+1], grady_[stc+1], gradx_[stcnx], grady_[stcnx], gradx_[stcnx+1], grady_[stcnx+1], x, y);
+      
+      // check for zero gradient, failed
+      if (x == 0.0 && y == 0.0) {
+        ROS_ERROR_STREAM_NAMED("fail_cases.zero_gradient", "[PathCalc] Zero gradient");
+        return false; //Or maybe use_gradient = false?
       }
       
-      int stcnx = stc + xs_;
-      int stcpx = stc - xs_;
-      
-      
-      int minc = stc;
-      float vx =0, vy=0;
-      
+      if(x*vx + y*vy >0)
       {
-        float minp = potential[stc];
-        int st = stcpx - 1;
-        if (potential[st] < minp) {
-          minp = potential[st];
-          minc = st;
-          vx=-1;
-          vy=-1;
+        follow_grid = false;
+        
+        // move in the right direction
+        float ss = pathStep_ / hypot(x, y);
+        dx += x * ss;
+        dy += y * ss;
+        
+        // check for overflow
+        if (dx > 1.0) {
+          stc++;
+          dx -= 1.0;
         }
-        st++;
-        if (potential[st] < minp) {
-          minp = potential[st];
-          minc = st;
-          vx=0;
-          vy=-1;
+        if (dx < -1.0) {
+          stc--;
+          dx += 1.0;
         }
-        st++;
-        if (potential[st] < minp) {
-          minp = potential[st];
-          minc = st;
-          vx=1;
-          vy=-1;
+        if (dy > 1.0) {
+          stc += xs_;
+          dy -= 1.0;
         }
-        st = stc - 1;
-        if (potential[st] < minp) {
-          minp = potential[st];
-          minc = st;
-          vx=-1;
-          vy=0;
-        }
-        st = stc + 1;
-        if (potential[st] < minp) {
-          minp = potential[st];
-          minc = st;
-          vx=1;
-          vy=0;
-        }
-        st = stcnx - 1;
-        if (potential[st] < minp) {
-          minp = potential[st];
-          minc = st;
-          vx=-1;
-          vy=1;
-        }
-        st++;
-        if (potential[st] < minp) {
-          minp = potential[st];
-          minc = st;
-          vx=0;
-          vy=1;
-        }
-        st++;
-        if (potential[st] < minp) {
-          minp = potential[st];
-          minc = st;
-          vx=1;
-          vy=1;
+        if (dy < -1.0) {
+          stc -= xs_;
+          dy += 1.0;
         }
       }
+      else
+      {
+        ROS_DEBUG("Dot product doesn't align, following grid!");
+        ROS_DEBUG_STREAM("Min potential vector: " << vx << "," << vy << "; gradient vector: " << x << "," << y);
+        ROS_DEBUG("Goal: [%f, %f], Current: [%f, %f], Index: [%d, %d] | Offsets: [%f %f] ", start_x, start_y, nx, ny, stc%xs_, stc/xs_, dx, dy);
+        
+      }
       
-      bool follow_grid = true;
-      // check for potentials at eight positions near cell
-      if (potential[stc] >= POT_HIGH || potential[stc + 1] >= POT_HIGH || potential[stc - 1] >= POT_HIGH
-        || potential[stcnx] >= POT_HIGH || potential[stcnx + 1] >= POT_HIGH || potential[stcnx - 1] >= POT_HIGH
-        || potential[stcpx] >= POT_HIGH || potential[stcpx + 1] >= POT_HIGH || potential[stcpx - 1] >= POT_HIGH
-        || oscillation_detected) {
-        ROS_DEBUG("[Path] Pot fn boundary, following grid (%0.1f/%d)", potential[stc], (int) path.size());
-      // check eight neighbors to find the lowest
-        }
-        else
-        {
-          // get grad at four positions near cell
-          gradCell(potential, stc);
-          gradCell(potential, stc + 1);
-          gradCell(potential, stcnx);
-          gradCell(potential, stcnx + 1);
-          
-          // get interpolated gradient
-          float x1 = (1.0 - dx) * gradx_[stc] + dx * gradx_[stc + 1];
-          float x2 = (1.0 - dx) * gradx_[stcnx] + dx * gradx_[stcnx + 1];
-          float x = (1.0 - dy) * x1 + dy * x2; // interpolated x
-          float y1 = (1.0 - dx) * grady_[stc] + dx * grady_[stc + 1];
-          float y2 = (1.0 - dx) * grady_[stcnx] + dx * grady_[stcnx + 1];
-          float y = (1.0 - dy) * y1 + dy * y2; // interpolated y
-          
-          // show gradients
-          ROS_DEBUG(
-            "[Path] %0.2f,%0.2f  %0.2f,%0.2f  %0.2f,%0.2f  %0.2f,%0.2f; final x=%.3f, y=%.3f\n", gradx_[stc], grady_[stc], gradx_[stc+1], grady_[stc+1], gradx_[stcnx], grady_[stcnx], gradx_[stcnx+1], grady_[stcnx+1], x, y);
-          
-          // check for zero gradient, failed
-          if (x == 0.0 && y == 0.0) {
-            ROS_ERROR_STREAM_NAMED("fail_cases.zero_gradient", "[PathCalc] Zero gradient");
-            return false; //Or maybe use_gradient = false?
-          }
-          
-          if(x*vx + y*vy >0)
-          {
-            follow_grid = false;
-            
-            // move in the right direction
-            float ss = pathStep_ / hypot(x, y);
-            dx += x * ss;
-            dy += y * ss;
-            
-            // check for overflow
-            if (dx > 1.0) {
-              stc++;
-              dx -= 1.0;
-            }
-            if (dx < -1.0) {
-              stc--;
-              dx += 1.0;
-            }
-            if (dy > 1.0) {
-              stc += xs_;
-              dy -= 1.0;
-            }
-            if (dy < -1.0) {
-              stc -= xs_;
-              dy += 1.0;
-            }
-          }
-          else
-          {
-            ROS_DEBUG("Dot product doesn't align, following grid!");
-            ROS_DEBUG_STREAM("Min potential vector: " << vx << "," << vy << "; gradient vector: " << x << "," << y);
-            ROS_DEBUG("Goal: [%f, %f], Current: [%f, %f], Index: [%d, %d] | Offsets: [%f %f] ", start_x, start_y, nx, ny, stc%xs_, stc/xs_, dx, dy);
-            
-          }
-          
-        }
-        
-        
-        if(follow_grid)
-        {
-          stc = minc;
-          dx = 0;
-          dy = 0;
-          
-          //ROS_DEBUG("[Path] Pot: %0.1f  pos: %0.1f,%0.1f",
-          //    potential[stc], path[npath-1].first, path[npath-1].second);
-          
-          if (potential[stc] >= POT_HIGH) {
-            ROS_ERROR_STREAM_NAMED("fail_cases.high_potential", "[PathCalc] No path found, high potential");
-            //savemap("navfn_highpot");
-            return false;
-          }
-        }
-        
-        //printf("[Path] Pot: %0.1f  grad: %0.1f,%0.1f  pos: %0.1f,%0.1f\n",
-        //         potential[stc], dx, dy, path[npath-1].first, path[npath-1].second);
+    }
+    
+    
+    if(follow_grid)
+    {
+      stc = minc;
+      dx = 0;
+      dy = 0;
+      
+      //ROS_DEBUG("[Path] Pot: %0.1f  pos: %0.1f,%0.1f",
+      //    potential[stc], path[npath-1].first, path[npath-1].second);
+      
+      if (potential[stc] >= POT_HIGH) {
+        ROS_ERROR_STREAM_NAMED("fail_cases.high_potential", "[PathCalc] No path found, high potential");
+        //savemap("navfn_highpot");
+        return false;
+      }
+    }
+      
+    //printf("[Path] Pot: %0.1f  grad: %0.1f,%0.1f  pos: %0.1f,%0.1f\n",
+    //         potential[stc], dx, dy, path[npath-1].first, path[npath-1].second);
   }
   ROS_ERROR_STREAM_NAMED("fail_cases.max_iterations", "[PathCalc] did not find a path within " << ns*4 << " iterations!");
   
