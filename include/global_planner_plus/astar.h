@@ -35,8 +35,8 @@
  * Author: Eitan Marder-Eppstein
  *         David V. Lu!!
  *********************************************************************/
-#ifndef _ASTAR_H
-#define _ASTAR_H
+#ifndef GLOBAL_PLANNER_PLUS_ASTAR_H
+#define GLOBAL_PLANNER_PLUS_ASTAR_H
 
 #include <global_planner_plus/planner_core.h>
 #include <global_planner_plus/expander.h>

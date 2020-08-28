@@ -35,8 +35,8 @@
  * Author: Eitan Marder-Eppstein
  *         David V. Lu!!
  *********************************************************************/
-#ifndef _GRADIENT_PATH_H
-#define _GRADIENT_PATH_H
+#ifndef GLOBAL_PLANNER_PLUS_GRADIENT_PATH_H
+#define GLOBAL_PLANNER_PLUS_GRADIENT_PATH_H
 
 #include<global_planner_plus/traceback.h>
 #include <math.h>

@@ -34,8 +34,8 @@
  *
  * Author: David V. Lu!!
  *********************************************************************/
-#ifndef global_planner_plus_ORIENTATION_FILTER_H
-#define global_planner_plus_ORIENTATION_FILTER_H
+#ifndef GLOBAL_PLANNER_PLUS_ORIENTATION_FILTER_H
+#define GLOBAL_PLANNER_PLUS_ORIENTATION_FILTER_H
 #include <nav_msgs/Path.h>
 
 namespace global_planner_plus {

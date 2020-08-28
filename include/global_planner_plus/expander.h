@@ -35,8 +35,8 @@
  * Author: Eitan Marder-Eppstein
  *         David V. Lu!!
  *********************************************************************/
-#ifndef _EXPANDER_H
-#define _EXPANDER_H
+#ifndef GLOBAL_PLANNER_PLUS_EXPANDER_H
+#define GLOBAL_PLANNER_PLUS_EXPANDER_H
 #include <global_planner_plus/potential_calculator.h>
 #include <global_planner_plus/planner_core.h>
 

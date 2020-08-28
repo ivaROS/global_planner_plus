@@ -35,8 +35,8 @@
  * Author: Eitan Marder-Eppstein
  *         David V. Lu!!
  *********************************************************************/
-#ifndef _TRACEBACK_H
-#define _TRACEBACK_H
+#ifndef GLOBAL_PLANNER_PLUS_TRACEBACK_H
+#define GLOBAL_PLANNER_PLUS_TRACEBACK_H
 #include<vector>
 #include<global_planner_plus/potential_calculator.h>
 

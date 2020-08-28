@@ -35,8 +35,8 @@
  * Author: Eitan Marder-Eppstein
  *         David V. Lu!!
  *********************************************************************/
-#ifndef _QUADRATIC_CALCULATOR_H
-#define _QUADRATIC_CALCULATOR_H
+#ifndef GLOBAL_PLANNER_PLUS_QUADRATIC_CALCULATOR_H
+#define GLOBAL_PLANNER_PLUS_QUADRATIC_CALCULATOR_H
 #include<vector>
 #include<global_planner_plus/potential_calculator.h>
 

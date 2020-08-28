@@ -1,5 +1,5 @@
-#ifndef _PLANNERCORE_H
-#define _PLANNERCORE_H
+#ifndef GLOBAL_PLANNER_PLUS_PLANNERCORE_H
+#define GLOBAL_PLANNER_PLUS_PLANNERCORE_H
 /*********************************************************************
  *
  * Software License Agreement (BSD License)
@@ -221,4 +221,4 @@ class GlobalPlannerPlus : public nav_core::BaseGlobalPlanner {
 
 } //end namespace global_planner_plus
 
-#endif
+#endif //GLOBAL_PLANNER_PLUS_PLANNERCORE_H

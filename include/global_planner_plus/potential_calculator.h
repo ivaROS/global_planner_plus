@@ -35,8 +35,8 @@
  * Author: Eitan Marder-Eppstein
  *         David V. Lu!!
  *********************************************************************/
-#ifndef _POTENTIAL_CALCULATOR_H
-#define _POTENTIAL_CALCULATOR_H
+#ifndef GLOBAL_PLANNER_PLUS_POTENTIAL_CALCULATOR_H
+#define GLOBAL_PLANNER_PLUS_POTENTIAL_CALCULATOR_H
 namespace global_planner_plus {
 
 class PotentialCalculator {

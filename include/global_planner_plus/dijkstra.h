@@ -35,8 +35,8 @@
  * Author: Eitan Marder-Eppstein
  *         David V. Lu!!
  *********************************************************************/
-#ifndef _DIJKSTRA_H
-#define _DIJKSTRA_H
+#ifndef GLOBAL_PLANNER_PLUS_DIJKSTRA_H
+#define GLOBAL_PLANNER_PLUS_DIJKSTRA_H
 
 #define PRIORITYBUFSIZE 10000
 #include <math.h>

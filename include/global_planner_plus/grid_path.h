@@ -35,8 +35,8 @@
  * Author: Eitan Marder-Eppstein
  *         David V. Lu!!
  *********************************************************************/
-#ifndef _GRID_PATH_H
-#define _GRID_PATH_H
+#ifndef GLOBAL_PLANNER_PLUS_GRID_PATH_H
+#define GLOBAL_PLANNER_PLUS_GRID_PATH_H
 #include<vector>
 #include<global_planner_plus/traceback.h>
 
