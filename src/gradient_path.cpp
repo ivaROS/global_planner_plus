@@ -90,7 +90,7 @@ bool GradientPath::getPath(float* potential, double start_x, double start_y, dou
     
     if (stc < xs_ || stc > xs_ * ys_ - xs_) // would be out of bounds
     {
-      ROS_ERROR("[PathCalc] Out of bounds\n");
+      ROS_ERROR_STREAM_NAMED("fail_cases.out_of_bounds", "[PathCalc] Out of bounds\n");
       return false;
     }
     
@@ -207,7 +207,7 @@ bool GradientPath::getPath(float* potential, double start_x, double start_y, dou
           
           // check for zero gradient, failed
           if (x == 0.0 && y == 0.0) {
-            ROS_ERROR("[PathCalc] Zero gradient");
+            ROS_ERROR_STREAM_NAMED("fail_cases.zero_gradient", "[PathCalc] Zero gradient");
             return false; //Or maybe use_gradient = false?
           }
           
@@ -259,7 +259,7 @@ bool GradientPath::getPath(float* potential, double start_x, double start_y, dou
           //    potential[stc], path[npath-1].first, path[npath-1].second);
           
           if (potential[stc] >= POT_HIGH) {
-            ROS_ERROR("[PathCalc] No path found, high potential");
+            ROS_ERROR_STREAM_NAMED("fail_cases.high_potential", "[PathCalc] No path found, high potential");
             //savemap("navfn_highpot");
             return false;
           }
@@ -268,7 +268,7 @@ bool GradientPath::getPath(float* potential, double start_x, double start_y, dou
         //printf("[Path] Pot: %0.1f  grad: %0.1f,%0.1f  pos: %0.1f,%0.1f\n",
         //         potential[stc], dx, dy, path[npath-1].first, path[npath-1].second);
   }
-  ROS_ERROR_STREAM("[PathCalc] did not find a path within " << ns*4 << " iterations!");
+  ROS_ERROR_STREAM_NAMED("fail_cases.max_iterations", "[PathCalc] did not find a path within " << ns*4 << " iterations!");
   
   return false;
 }
