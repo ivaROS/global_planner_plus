@@ -99,8 +99,8 @@ bool DijkstraExpansion::calculatePotentials(unsigned char* costs, double start_x
     if(precise_)
     {
         double dx = start_x - (int)start_x, dy = start_y - (int)start_y;
-        dx = floorf(dx * 100 + 0.5) / 100;
-        dy = floorf(dy * 100 + 0.5) / 100;
+        //dx = floorf(dx * 100 + 0.5) / 100;
+        //dy = floorf(dy * 100 + 0.5) / 100;
         potential[k] = neutral_cost_ * 2 * dx * dy;
         potential[k+1] = neutral_cost_ * 2 * (1-dx)*dy;
         potential[k+nx_] = neutral_cost_*2*dx*(1-dy);
