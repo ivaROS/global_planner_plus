@@ -252,6 +252,8 @@ bool GlobalPlannerPlus::makePlan(const geometry_msgs::PoseStamped& start, const 
                 "This planner has not been initialized yet, but it is being used, please call initialize() before use");
         return false;
     }
+    
+    ros::WallTime start_time = ros::WallTime::now();
 
     //clear the plan, just in case
     plan.clear();
@@ -403,6 +405,8 @@ bool GlobalPlannerPlus::makePlan(const geometry_msgs::PoseStamped& start, const 
 
     // add orientations if needed
     orientation_filter_->processPath(start, plan);
+    
+    ROS_DEBUG_STREAM_NAMED("timing", "Global planning took: " << (ros::WallTime::now() - start_time).toSec()*1000 << "ms");
     
     //publish the plan for visualization purposes
     publishPlan(plan);
