@@ -225,6 +225,10 @@ void GlobalPlannerPlus::updatePotentialMsg()
   
   potential_msg_ = boost::make_shared<PotentialGrid>();
   potential_msg_->data.resize(nx*ny);
+  potential_msg_->info = getMapInfo();
+  potential_msg_->header.frame_id = frame_id_;
+  potential_msg_->header.stamp = ros::Time::now();
+  
 //   potential_msg_->info.resolution = costmap_->getResolution();
 //   potential_msg_->info.width = nx;
 //   potential_msg_->info.height = ny;
@@ -613,36 +617,44 @@ bool GlobalPlannerPlus::getPlanFromPotential(double start_x, double start_y, dou
     return !plan.empty();
 }
 
+nav_msgs::MapMetaData GlobalPlannerPlus::getMapInfo()
+{
+  int nx = costmap_->getSizeInCellsX(), ny = costmap_->getSizeInCellsY();
+  double resolution = costmap_->getResolution();
+  
+  nav_msgs::MapMetaData info;
+  info.resolution = resolution;
+  
+  info.width = nx;
+  info.height = ny;
+  
+  double wx, wy;
+  costmap_->mapToWorld(0, 0, wx, wy);
+  info.origin.position.x = wx - resolution / 2;
+  info.origin.position.y = wy - resolution / 2;
+  info.origin.position.z = 0.0;
+  info.origin.orientation.w = 1.0;
+  
+  return info;
+}
+
 void GlobalPlannerPlus::publishPotential()
 {
     if(potential_pub_.getNumSubscribers()>0 || raw_potential_pub_.getNumSubscribers()>0)
     {
         int nx = costmap_->getSizeInCellsX(), ny = costmap_->getSizeInCellsY();
-        double resolution = costmap_->getResolution();
         
-        std_msgs::Header header;
+//         std_msgs::Header header;
+//         header.frame_id = frame_id_;
+//         header.stamp = ros::Time::now();  //I'd much rather use the time of the most recent update to the costmap or something, if possible
+        
+        nav_msgs::MapMetaData info = getMapInfo();
+        
         // Publish Whole Grid
-        header.frame_id = frame_id_;
-        header.stamp = ros::Time::now();  //I'd much rather use the time of the most recent update to the costmap or something, if possible
-        
-        nav_msgs::MapMetaData info;
-        info.resolution = resolution;
-        
-        info.width = nx;
-        info.height = ny;
-
-        double wx, wy;
-        costmap_->mapToWorld(0, 0, wx, wy);
-        info.origin.position.x = wx - resolution / 2;
-        info.origin.position.y = wy - resolution / 2;
-        info.origin.position.z = 0.0;
-        info.origin.orientation.w = 1.0;
-
-        
         if(potential_pub_.getNumSubscribers()>0)
         {
             nav_msgs::OccupancyGrid::Ptr grid = boost::make_shared<nav_msgs::OccupancyGrid>();
-            grid->header = header;
+            grid->header = potential_msg_->header;
             grid->info = info;
         
             grid->data.resize(nx * ny);
@@ -668,8 +680,8 @@ void GlobalPlannerPlus::publishPotential()
         
         if(raw_potential_pub_.getNumSubscribers()>0)
         {
-          potential_msg_->header = header;
-          potential_msg_->info = info;
+          //potential_msg_->header = header;
+          //potential_msg_->info = info;
           
           raw_potential_pub_.publish((PotentialGrid::ConstPtr)potential_msg_);
         }

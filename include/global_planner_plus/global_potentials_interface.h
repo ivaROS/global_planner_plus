@@ -51,9 +51,10 @@ namespace global_planner_plus
   public:
     //TODO: Pass in transform listener and costmap
     GlobalPotentialsInterface(ros::NodeHandle nh=ros::NodeHandle());
-    virtual void init(std::string potentials_topic);
+    virtual void init(std::string potentials_topic="");
     //bool updatePotentials(const PoseSE2& start, const PoseSE2& goal);
     virtual bool updateTransform(const tf::StampedTransform& transform);
+    virtual void setPotentials(const global_planner_plus::PotentialGrid::ConstPtr& potentials);
     virtual float getPotential(const geometry_msgs::Pose& pose) const;
     virtual bool getGradient(const geometry_msgs::Pose& pose, Eigen::Vector2d& grad) const;
     virtual bool isInited() const;

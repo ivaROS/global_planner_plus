@@ -121,6 +121,9 @@ class GlobalPlannerPlus : public nav_core::BaseGlobalPlanner {
         bool updatePotentials(const geometry_msgs::Pose& start, const geometry_msgs::Pose& goal,
                  double tolerance, const std::vector<geometry_msgs::Point>& target_points);
         
+        nav_msgs::MapMetaData getMapInfo();
+        
+        
         /**
          * @brief  Computes the full navigation function for the map given a point in the world to start from
          * @param world_point The point to use for seeding the navigation function
@@ -177,6 +180,7 @@ class GlobalPlannerPlus : public nav_core::BaseGlobalPlanner {
          * @brief Store a copy of the current costmap in \a costmap.  Called by makePlan.
          */
         costmap_2d::Costmap2D* costmap_;
+        PotentialGrid::Ptr potential_msg_;
         std::string frame_id_;
         ros::Publisher plan_pub_;
         bool initialized_, allow_unknown_, visualize_potential_;
@@ -205,7 +209,6 @@ class GlobalPlannerPlus : public nav_core::BaseGlobalPlanner {
         void outlineMap(unsigned char* costarr, int nx, int ny, unsigned char value);
         unsigned char* cost_array_;
         float* potential_array_;
-        PotentialGrid::Ptr potential_msg_;
         
         unsigned int start_x_, start_y_, end_x_, end_y_;
 

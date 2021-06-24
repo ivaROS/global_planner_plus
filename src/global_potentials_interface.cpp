@@ -48,14 +48,27 @@ namespace global_planner_plus
   
   void GlobalPotentialsInterface::init(std::string potentials_topic)
   {
-    potentials_sub_.subscribe(nh_, potentials_topic, 1);
-    potentials_sub_.registerCallback(&GlobalPotentialsInterface::potentialsCB, this);
-    
     potentials_cache_.setCacheSize(1);
-    potentials_cache_.connectInput(potentials_sub_);
+    
+    if(potentials_topic != "")
+    {
+      potentials_sub_.subscribe(nh_, potentials_topic, 1);
+      potentials_sub_.registerCallback(&GlobalPotentialsInterface::potentialsCB, this);
+      
+      potentials_cache_.connectInput(potentials_sub_);
+    }
+    else
+    {
+      ROS_WARN("No potentials_topic specified, make sure you are manually setting potentials");
+    }
     
     //planner_.initialize("potentials_planner", &lcr_);
     inited_=true;
+  }
+  
+  void GlobalPotentialsInterface::setPotentials(const global_planner_plus::PotentialGrid::ConstPtr& potentials)
+  {
+    potentials_cache_.add(potentials);
   }
   
   bool GlobalPotentialsInterface::isInited() const
